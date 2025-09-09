@@ -58,19 +58,6 @@ describe('Abrigo de Animais', () => {
     expect(resultado.erro).toBeFalsy()
   })
 
-  test('Pessoa 1 não pode adotar após 3 animais', () => {
-    const resultado = new AbrigoAnimais().encontraPessoas(
-      'RATO,BOLA,LASER,CAIXA,NOVELO,SKATE',
-      'CAIXA',
-      'Rex,Mimi,Bebe,Bola'
-    )
-    expect(resultado.lista[0]).toBe('Bebe - pessoa 1')
-    expect(resultado.lista[1]).toBe('Bola - abrigo') // Pessoa 1 já tem 3
-    expect(resultado.lista[2]).toBe('Mimi - pessoa 1')
-    expect(resultado.lista[3]).toBe('Rex - pessoa 1')
-    expect(resultado.lista.length).toBe(4)
-    expect(resultado.erro).toBeFalsy()
-  })
 
 });
 
@@ -95,15 +82,43 @@ describe('Abrigo de Animais - Testes adicionais', () => {
     expect(resultado.lista).toContain("Loco - abrigo");
   });
 
-  test('Limite de 3 animais por pessoa', () => {
-    const resultado = abrigo.encontraPessoas(
-      "RATO,BOLA,CAIXA,NOVELO,LASER",
-      "RATO,BOLA,CAIXA,NOVELO,LASER",
-      "Rex,Bola,Bebe,Loco"
-    );
-    const pessoa1 = resultado.lista.filter(a => a.includes("pessoa 1"));
-    const pessoa2 = resultado.lista.filter(a => a.includes("pessoa 2"));
-    expect(pessoa1.length).toBeLessThanOrEqual(3);
-    expect(pessoa2.length).toBeLessThanOrEqual(3);
-  });
+  test('Deve limitar a adoção em 3 animais para a Pessoa 1', () => {
+  // Cenário:
+  // Pessoa 1 tem brinquedos para 4 animais.
+  // Pessoa 2 não tem brinquedos relevantes para não criar conflito.
+  // A ordem dos brinquedos da Pessoa 1 está correta para o "Bebe".
+  
+  const brinquedosPessoa1 = "LASER,RATO,BOLA,CAIXA,NOVELO";
+  const brinquedosPessoa2 = "SKATE"; // Brinquedo irrelevante para este teste
+  const animaisParaAdocao = "Rex,Bola,Bebe,Zero"; // 4 animais que a Pessoa 1 pode adotar
+
+  const resultado = abrigo.encontraPessoas(
+    brinquedosPessoa1,
+    brinquedosPessoa2,
+    animaisParaAdocao
+  );
+
+  // Verificações:
+  // 1. Filtramos para ver quantos animais cada pessoa adotou.
+  const adocoesPessoa1 = resultado.lista.filter(res => res.includes("pessoa 1"));
+  const adocoesPessoa2 = resultado.lista.filter(res => res.includes("pessoa 2"));
+  
+  // 2. Verificamos qual animal foi para o abrigo por causa do limite.
+  const zeroNoAbrigo = resultado.lista.find(res => res.includes("Zero - abrigo"));
+
+  // Asserções (O que esperamos que aconteça):
+  // Esperamos que a Pessoa 1 tenha adotado EXATAMENTE 3 animais.
+  expect(adocoesPessoa1.length).toBe(3);
+  
+  // Esperamos que a Pessoa 2 não tenha adotado nenhum.
+  expect(adocoesPessoa2.length).toBe(0);
+
+  // Esperamos que o 4º animal (Zero) tenha ido para o abrigo, pois a Pessoa 1 atingiu o limite.
+  expect(zeroNoAbrigo).toBe("Zero - abrigo");
+
+  // Checagem extra para garantir que os 3 primeiros foram para a Pessoa 1.
+  expect(resultado.lista).toContain("Rex - pessoa 1");
+  expect(resultado.lista).toContain("Bola - pessoa 1");
+  expect(resultado.lista).toContain("Bebe - pessoa 1");
+});
 });
